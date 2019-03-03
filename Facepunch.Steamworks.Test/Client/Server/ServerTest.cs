@@ -101,7 +101,7 @@ namespace Facepunch.Steamworks.Test
                     }
 
                     GC.Collect();
-                    if ( !server.Auth.StartSession( ticketBinary, client.SteamId ) )
+                    if ( ServerAuth.StartSessionResult.OK != server.Auth.StartSession( ticketBinary, client.SteamId ) )
                     {
                         Assert.Fail( "Start Session returned false" );
                     }
