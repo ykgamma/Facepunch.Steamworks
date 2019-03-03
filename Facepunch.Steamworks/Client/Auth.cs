@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Facepunch.Steamworks.Callbacks;
 
 namespace Facepunch.Steamworks
 {
@@ -77,6 +78,50 @@ namespace Facepunch.Steamworks
             }
         }
 
+        public delegate void RequestEncryptedAppTicketCallback(byte[] encryptedAppTicket);
 
+        /// <summary>
+        /// Creates an encrpted app ticket. 
+        /// Which you can send to a server to authenticate that you are who you say you are.
+        /// </summary>
+        public unsafe void RequestEncryptedAppTicket(byte[] dataToInclude, RequestEncryptedAppTicketCallback onSuccess, FailureCallback onFailure = null)
+        {
+            fixed(byte* b = dataToInclude)
+            {
+                client.native.user.RequestEncryptedAppTicket((IntPtr)b, dataToInclude.Length, (result, error) =>
+                {
+                    if (error)
+                    {
+                        onFailure?.Invoke(Result.IOFailure);
+                    } else
+                    {
+                        byte[] data = GetEncryptedAppTicket();
+                        if (data == null)
+                        {
+                            onFailure?.Invoke(Result.IOFailure);
+                        } else
+                        {
+                            onSuccess.Invoke(data);
+                        }
+                    }
+                });
+            }
+        }
+
+        private unsafe byte[] GetEncryptedAppTicket()
+        {
+            var data = new byte[1024*16];
+
+            fixed (byte* b = data)
+            {
+                uint ticketLength = 0;
+                bool success = client.native.user.GetEncryptedAppTicket((IntPtr)b, data.Length, out ticketLength);
+
+                if (!success || ticketLength == 0)
+                    return null;
+
+                return data.Take((int)ticketLength).ToArray();
+            }
+        }
     }
 }

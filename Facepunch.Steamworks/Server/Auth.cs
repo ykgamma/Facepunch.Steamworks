@@ -31,6 +31,16 @@ namespace Facepunch.Steamworks
             PublisherIssuedBan = 9,
         }
 
+        public enum StartSessionResult : int
+        {
+            OK = 0,
+            InvalidTicket = 1,
+            DuplicateRequest = 2,
+            InvalidVersion = 3,
+            GameMismatch = 4,
+            ExpiredTicket = 5,
+        }
+
         internal ServerAuth( Server s )
         {
             server = s;
@@ -47,16 +57,11 @@ namespace Facepunch.Steamworks
         /// <summary>
         /// Start authorizing a ticket. This user isn't authorized yet. Wait for a call to OnAuthChange.
         /// </summary>
-        public unsafe bool StartSession( byte[] data, ulong steamid )
+        public unsafe StartSessionResult StartSession( byte[] data, ulong steamid )
         {
             fixed ( byte* p = data )
             {
-                var result = server.native.gameServer.BeginAuthSession( (IntPtr)p, data.Length, steamid );
-
-                if ( result == SteamNative.BeginAuthSessionResult.OK )
-                    return true;
-
-                return false;
+                return (StartSessionResult)(int)server.native.gameServer.BeginAuthSession( (IntPtr)p, data.Length, steamid );
             }
         }
 
